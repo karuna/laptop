@@ -111,4 +111,13 @@ else
   echo "Not installing redis ..."
 fi
 
+read -p "Do you want to install node.js (required for compiling rails assets)? [y/n] " answer
+if [[ $answer = y ]]
+then
+  echo "Installing node.js ..."
+  sudo apt-get install nodejs nodejs-dev
+else
+  echo "Not installing node.js ..."
+fi
+
 
