@@ -54,7 +54,7 @@ else
   echo "Not installing Postgres"
 fi
 
-echo "Install MySQL, a gread open source relational database ..."
+echo "Installing MySQL, a gread open source relational database ..."
 sudo apt-get install libmysqlclient-dev mysql-server mysql-client -y
 
 echo "Installing ack, a good way to search through files ..."
@@ -92,4 +92,14 @@ then
 else
   echo "Not installing php ..."
 fi
+
+read -p "Do you want to install redis? [y/n] " answer
+if [[ $answer = y ]]
+then
+  echo "Installing redis, an open source, BSD licensed, advanced key-value store ..."
+  sudo apt-get install redis-server
+else
+  echo "Not installing redis ..."
+fi
+
 
