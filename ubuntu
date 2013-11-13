@@ -72,7 +72,7 @@ sudo apt-get install git git-core gitg -y
 read -p "Do you want to install rvm and set default ruby? [y/n] " answer
 if [[ $answer = y ]]
 then
-  bash < <(curl -s https://raw.github.com/kiranatama/laptop/master/ruby)
+  bash < <(curl -s https://raw.github.com/karuna/laptop/master/ruby)
 else
   echo "Not installing rvm and set default ruby ..."
 fi
@@ -80,7 +80,7 @@ fi
 read -p "Do you want to install apache (required for installing php)? [y/n] " answer
 if [[ $answer = y ]]
 then
-  bash < <(curl -s https://raw.github.com/kiranatama/laptop/master/apache)
+  bash < <(curl -s https://raw.github.com/karuna/laptop/master/apache)
 else
   echo "Not installing apache ..."
 fi
@@ -88,7 +88,7 @@ fi
 read -p "Do you want to install php? [y/n] " answer
 if [[ $answer = y ]]
 then
-  bash < <(curl -s https://raw.github.com/kiranatama/laptop/master/php)
+  bash < <(curl -s https://raw.github.com/karuna/laptop/master/php)
 else
   echo "Not installing php ..."
 fi
