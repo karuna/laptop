@@ -3,15 +3,6 @@ Laptop
 
 Laptop is a set of scripts to get your laptop set up as a development machine.
 
-Mac OS X
---------
-
-### Not maintained
-
-~~First, install [GCC for OS X](https://github.com/kennethreitz/osx-gcc-installer). (requires OS X 10.6 or higher)~~
-~~Then, run this one-liner:~~
-~~bash < <(curl -s https://raw.github.com/karuna/laptop/master/mac)~~
-
 Ubuntu
 ------
 
@@ -43,7 +34,8 @@ What it sets up
 * Node js (for therubyracer)
 * ImageMagick (for cropping and resizing images)
 * RVM (for managing versions of the Ruby programming language)
-
+* Java runtime (Oracle Java or OpenJDK)
+* Elasticsearch
 
 It should take about 30 minutes for everything to install, depending on your machine and connection speed.
 
