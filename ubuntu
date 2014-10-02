@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
+shopt -s nocasematch
+
 echo "Checking for SSH key, generating one if it exists ..."
-if [[ ! -f ~/.ssh/id_rsa.pub ]] ; then 
+if [[ ! -f ~/.ssh/id_rsa.pub ]] ; then
   ssh-keygen -t rsa
 fi;
 
-read -p "Do you want to use Ubuntu mirror from Indonesia? [y/n] " answer;
+read -p "Do you want to use Ubuntu mirror from Indonesia? [y/n] " answer
 
-if [[ $answer = y ]]; then
+if [[ $answer =~ (y|yes) ]]; then
   echo "Using Ubuntu mirror from Indonesia ..."
   export codename=`lsb_release -sc`
   sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup
@@ -32,7 +34,7 @@ if [[ $answer = y ]]; then
   deb-src http://extras.ubuntu.com/ubuntu $codename main
 DELIM
   sudo mv tmp.sources.list /etc/apt/sources.list
-else 
+else
   echo "Not using Ubuntu mirror from Indonesia ..."
 fi;
 
@@ -45,17 +47,23 @@ sudo apt-get dist-upgrade
 echo "Installing OS packages. You will be prompted for your password ..."
 sudo apt-get install build-essential bison openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-0 libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev libcurl4-openssl-dev -y
 
-read -p "Do you want to install Postgres? [y/n] " answer
-if [[ $answer = y ]]
+read -p "Do you want to install PostgreSQL? [y/n] " postgresql_answer
+if [[ $postgresql_answer =~ (y|yes) ]]
 then
-  echo "Install Postgres, a great open source relational database ..."
+  echo "Installing PostgreSQL, a great open source relational database ..."
   sudo apt-get install libpq5 libpq-dev postgresql -y
 else
-  echo "Not installing Postgres"
+  echo "Not installing PostgreSQL"
 fi
 
-echo "Installing MySQL, a gread open source relational database ..."
-sudo apt-get install libmysqlclient-dev mysql-server mysql-client -y
+read -p "Do you want to install MySQL? [y/n] " mysql_answer
+if [[ $mysql_answer =~ (y|yes) ]]
+then
+  echo "Installing MySQL, a great open source relational database ..."
+  sudo apt-get install libmysqlclient-dev mysql-server mysql-client -y
+else
+  echo "Not installing MySQL"
+fi
 
 echo "Installing ack, a good way to search through files ..."
 sudo apt-get install ack-grep -y
@@ -69,32 +77,105 @@ sudo apt-get install subversion -y
 echo "Installing git, free & open source, distributed version control system ..."
 sudo apt-get install git git-core gitg -y
 
-read -p "Do you want to install rvm and set default ruby? [y/n] " answer
-if [[ $answer = y ]]
+read -p "Do you want to install rvm and set default ruby? [y/n] " ruby_answer
+if [[ $ruby_answer =~ (y|yes) ]]
 then
-  bash < <(curl -s https://raw.github.com/karuna/laptop/master/ruby)
+  echo "Installing .gemrc so installing gem won't create ri and rdoc files"
+  if [ ! -f ~/.gemrc ]
+  then
+    echo "gem: --no-ri --no-rdoc" > ~/.gemrc
+  fi
+
+  echo "Installing RVM (Ruby Version Manager) ..."
+  \curl -L https://get.rvm.io | bash -s stable
+
+  echo '[[ -s "$HOME/.rvm/scripts/rvm" ]] && . "$HOME/.rvm/scripts/rvm" # Load RVM function' >> ~/.bash_profile
+
+  source ~/.bash_profile
+
+  echo "Installing Ruby 2.0.0 stable and making it the default Ruby ..."
+  rvm install 2.1
+  rvm use 2.1 --default
+
+  echo "Installing Bundler for managing Ruby libraries ..."
+  gem install bundler --no-rdoc --no-ri
+
+  if [[ $mysql_answer =~ (y|yes) ]]
+  then
+    echo "Installing the mysql gem to talk to MySQL databases ..."
+    gem install mysql --no-rdoc --no-ri
+  fi
+
+  if [[ $postgresql_answer =~ (y|yes) ]]
+  then
+    echo "Installing the pq gem to talk to PostgreSQL databases ..."
+    gem install pg --no-rdoc --no-ri
+  fi
+
 else
   echo "Not installing rvm and set default ruby ..."
 fi
 
-read -p "Do you want to install apache (required for installing php)? [y/n] " answer
-if [[ $answer = y ]]
+read -p "Do you want to install PHP? [y/n] " php_answer
+if [[ $php_answer =~ (y|yes) ]]
 then
-  bash < <(curl -s https://raw.github.com/karuna/laptop/master/apache)
-else
-  echo "Not installing apache ..."
-fi
+  echo "Installing PHP interpreter ..."
+  sudo apt-get install php5 php5-common php5-dev php5-curl php5-fpm php5-gd -y
 
-read -p "Do you want to install php? [y/n] " answer
-if [[ $answer = y ]]
-then
-  bash < <(curl -s https://raw.github.com/karuna/laptop/master/php)
+  if [[ $mysql_answer =~ (y|yes) ]]
+  then
+    echo "Installing the PHP extension to talk to MySQL databases ..."
+    sudo apt-get install php5-mysql
+  fi
+
+  if [[ $postgresql_answer =~ (y|yes) ]]
+  then
+    echo "Installing the PHP extension to talk to PostgreSQL databases ..."
+    sudo apt-get install php5-pgsql
+  fi
 else
   echo "Not installing php ..."
 fi
 
+read -p "Do you want to install apache? [y/n] " answer
+if [[ $answer =~ (y|yes) ]]
+then
+  echo "Installing apache webserver"
+  sudo apt-get install apache2 apache2-mpm-worker apache2-threaded-dev apache2-utils libapr1-dev libaprutil1-dev -y
+
+  echo "Enabling default module"
+  sudo a2enmod rewrite
+
+  if [[ $php_anser =~ (y|yes) ]]
+  then
+    read -p "Do you want to install PHP? [y/n] " php_extension_answer
+    if [[ $php_extension_answer =~ (y|yes) ]]
+    then
+      echo "Installing the Apache module to run PHP application ..."
+      sudo apt-get install libapache2-mod-fastcgi php5-fpm
+      sudo a2enmod actions fastcgi alias
+      if [ ! -f /etc/apache2/conf.d/php5-fpm.conf ]
+      then
+        cat > tmp.php5-fpm.conf <<DELIM
+<IfModule mod_fastcgi.c>
+    AddHandler php5-fcgi .php
+    Action php5-fcgi /php5-fcgi
+    Alias /php5-fcgi /usr/lib/cgi-bin/php5-fcgi
+    FastCgiExternalServer /usr/lib/cgi-bin/php5-fcgi -host 127.0.0.1:9000 -pass-header Authorization
+</IfModule>
+DELIM
+        sudo mv tmp.php5-fpm.conf /etc/apache2/conf.d/php5-fpm.conf
+      fi
+    fi
+  fi
+  echo "Restarting apache service"
+  sudo service apache2 reload
+else
+  echo "Not installing apache ..."
+fi
+
 read -p "Do you want to install memcached? [y/n] " answer
-if [[ $answer = y ]]
+if [[ $answer =~ (y|yes) ]]
 then
   echo "Installing memcached, a distributed memory object caching system ..."
   sudo apt-get install memcached
@@ -103,7 +184,7 @@ else
 fi
 
 read -p "Do you want to install redis? [y/n] " answer
-if [[ $answer = y ]]
+if [[ $answer =~ (y|yes) ]]
 then
   echo "Installing redis, an open source, BSD licensed, advanced key-value store ..."
   sudo apt-get install redis-server
@@ -111,8 +192,8 @@ else
   echo "Not installing redis ..."
 fi
 
-read -p "Do you want to install node.js (required for compiling rails assets)? [y/n] " answer
-if [[ $answer = y ]]
+read -p "Do you want to install node.js? [y/n] " answer
+if [[ $answer =~ (y|yes) ]]
 then
   echo "Installing node.js ..."
   sudo apt-get install nodejs nodejs-dev
@@ -120,4 +201,54 @@ else
   echo "Not installing node.js ..."
 fi
 
+read -p "Do you want to install Oracle Java? [y/n] " java_answer
+if [[ $java_answer =~ (y|yes) ]]
+then
+  echo "Adding Oracle Java Repository ..."
+  sudo add-apt-repository ppa:webupd8team/java
 
+  echo "Updating package definition ..."
+  sudo apt-get update
+
+  echo "Installing Oracle Java ..."
+  sudo apt-get install oracle-java7-installer
+else
+  echo "Not installing Oracle Java ..."
+fi
+
+if ! [[ $java_answer =~ (y|yes) ]]
+then
+  read -p "Do you want to install OpenJDK? [y/n] " java_answer
+  if [[ $java_answer =~ (y|yes) ]]
+  then
+    echo "Installing OpenJDK ..."
+    sudo apt-get install openjdk-7-jre
+  else
+    echo "Not installing OpenJDK ..."
+  fi
+fi
+
+if ! [[ $java_answer =~ (y|yes) ]]
+then
+  read -p "Do you want to install elasticsearch? [y/n] " answer
+  if [[ $answer =~ (y|yes) ]]
+  then
+    echo "Adding elasticsearch Public Signing Key ..."
+    wget -qO - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+
+    echo "Adding elasticsearch repository ..."
+    cat > tmp.elasticsearch.list <<DELIM
+deb http://packages.elasticsearch.org/elasticsearch/0.90/debian stable main
+deb http://packages.elasticsearch.org/logstash/1.3/debian stable main
+DELIM
+    sudo mv tmp.elasticsearch.list /etc/apt/sources.list.d/elasticsearch.list
+
+    echo "Updating package definition ..."
+    sudo apt-get update
+
+    echo "Installing elasticsearch ..."
+    sudo apt-get install elasticsearch
+  else
+    echo "Not installing elasticsearch ..."
+  fi
+fi
