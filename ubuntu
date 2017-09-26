@@ -7,37 +7,6 @@ if [[ ! -f ~/.ssh/id_rsa.pub ]] ; then
   ssh-keygen -t rsa
 fi;
 
-read -p "Do you want to use Ubuntu mirror from Indonesia? [y/n] " answer
-
-if [[ $answer =~ (y|yes) ]]; then
-  echo "Using Ubuntu mirror from Indonesia ..."
-  export codename=`lsb_release -sc`
-  sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup
-  cat > tmp.sources.list <<DELIM
-  ###### Ubuntu Indonesian Repos ######
-  deb http://kambing.ui.ac.id/ubuntu $codename main restricted universe multiverse
-  #deb-src http://kambing.ui.ac.id/ubuntu $codename main restricted universe multiverse
-  deb http://kambing.ui.ac.id/ubuntu $codename-updates main restricted universe multiverse
-  #deb-src http://kambing.ui.ac.id/ubuntu $codename-updates main restricted universe multiverse
-  deb http://kambing.ui.ac.id/ubuntu $codename-security main restricted universe multiverse
-  #deb-src http://kambing.ui.ac.id/ubuntu $codename-security main restricted universe multiverse
-  deb http://kambing.ui.ac.id/ubuntu $codename-proposed main restricted universe multiverse
-  #deb-src http://kambing.ui.ac.id/ubuntu $codename-proposed main restricted universe multiverse
-  deb http://kambing.ui.ac.id/ubuntu $codename-backports main restricted universe multiverse
-  #deb-src http://kambing.ui.ac.id/ubuntu $codename-backports main restricted universe multiverse
-
-  #### Ubuntu Partner Repo
-  deb http://archive.canonical.com/ubuntu $codename partner
-
-  #### Ubuntu Extras Repo
-  deb http://extras.ubuntu.com/ubuntu $codename main
-  deb-src http://extras.ubuntu.com/ubuntu $codename main
-DELIM
-  sudo mv tmp.sources.list /etc/apt/sources.list
-else
-  echo "Not using Ubuntu mirror from Indonesia ..."
-fi;
-
 echo "Using apt-get to install OS packages so let's update it first ..."
 sudo apt-get update -y
 
@@ -94,8 +63,8 @@ then
   source ~/.bash_profile
 
   echo "Installing Ruby 2.0.0 stable and making it the default Ruby ..."
-  rvm install 2.1
-  rvm use 2.1 --default
+  rvm install 2.4.2
+  rvm use 2.4.2 --default
 
   echo "Installing Bundler for managing Ruby libraries ..."
   gem install bundler --no-rdoc --no-ri
